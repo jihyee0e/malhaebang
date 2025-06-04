@@ -19,7 +19,7 @@
 
 ---
 
-**🔁 파일별 상세 기능**  <span style="color:DarkGray">docker_version 기준</span>
+**🔁 파일별 상세 기능**  <span style="color:yello">docker_version 기준</span>
 1. 뉴스 수집 자동화 파이프라인 crawler.py
       - 카테고리 접근 자동화 (XPATH 매핑)
       - 기사 url 목록 수집
