@@ -1,38 +1,39 @@
-### 뉴스 크롤링
+### 네이버 부동산 매물 크롤링
 
 **🔎 목적**
 
-- 네이버 뉴스 경제 카테고리 전체에서 최신 기사를 세부 카테고리별로 수집하고 제목/본문/썸네일/URL을 확보하여 사용자에게 오늘의 이슈 전달
+- 서울시 전체 행정구(25개)/동 기준으로 네이버 부동산 원룸/투룸 크롤링하여 각 매물에 대한 상세정보 및 위/경도 좌표를 확보
 
 ---
 
 **📍 Tech Stack**
 
 | Component | Technology Used |
-| --- | ----- |
-| Automated Crawling | Selenium, BeautifulSoup, webdriver-manager, tqdm |
-| Data Processing | Pandas, Numpy, langdetect, scikit-learn (TF-IDF, KMeans) |
-| Text Analysis | KoNLPy (Komoran) |
-| Web Server | Flask |
-| Template Rendering | Jinja2 |
-| Front-end | HTML/CSS |
+| ---- | ---- |
+| GUI 기반 크롤링 | Selenium |
+| HTML 파싱 | BeautifulSoup |
+| DB 저장 | MySQL |
+| 위치 좌표 수집 | 내부 API 호출 |
 
 ---
 
-**🔁 파일별 상세 기능**
-1. 뉴스 수집 자동화 파이프라인 crawler.py
-      - 카테고리 접근 자동화 (XPATH 매핑)
-      - 기사 url 목록 수집
-      - 기사 본문 및 이미지 수집
-      - 텍스트 정제 및 구조화
-      - 병렬 실행 흐름
-2. 클러스터링 및 분류/필터링 파이프라인 filtered.py
-      - 명사 추출 및 벡터화
-      - DBSCAN 기반 군집화
-      - 클러스터 요약 및 키워드 기반 주제 분류
-4. 실행 컨트롤러 main.py
-      - 전체 흐름 제어
-5. 뉴스 요약 웹 서비스 구현 app.py
-      - 대표 뉴스 3건 무작위 제공 (/ 라우트)
-      - 기사 10건 무작위 제공 (/more 라우트)
-      - hover시 tooltip 표시 및 이미지가 없는 경우 기본 이미지 대체
+**🔁 주요 기능 흐름**
+crawling.ipynb
+(1) 행정구역 기반 매물 수집
+      - 서울시 전체 구/동 행정코드와 명칭
+            - 내부 API를 통해 수집 후 dong_dict.json 형식으로 구조화
+      - 네이버 부동산 페이지에서 서울->구->동 순서로 클릭하여 접근
+      - 동 선택 후, 페이지 끝까지 자동 스크롤 - 모든 매물 리스트 로딩
+            - 다수의 매물을 크롤링하되, 동마다 매물 수가 다르기 때문에 전체 매물 수집 완료 후 다음 동/구로 이동하는 구조 구현
+            - Lazy loading 구조 대응을 위한 무한 스크롤 감지 및 종료 조건 처리
+(2) 매물 상세 정보 추출
+      - 각 매물 요소 클릭 -> 매물 상세 페이지 진입 (실패 시 try/except 및 우회 처리)
+      - 주요 항목 **Selenium + XPath**로 파싱
+(3) 위치 좌표(위도/경도) 추출
+      - 매물 클릭 후, 내부 API 호출
+      - 응답 json에서 latitude, longitude 필드 파싱
+      - 클릭 이후에만 위치 로딩되므로 GUI 기반 진입 필수
+(4) MySQL 저장
+      - 수집된 매물 데이터 저장
+      - 모든 항목을 정규화된 컬럼에 삽입
+      - 이미 포함된 항목 이외에 향후 사용될 safety_score. embedding, gpt_description 필드까지 확보된 구조
